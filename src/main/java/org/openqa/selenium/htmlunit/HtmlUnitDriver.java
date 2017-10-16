@@ -89,6 +89,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.BrowserVersion.BrowserVersionBuilder;
 import com.gargoylesoftware.htmlunit.CookieManager;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.ProxyConfig;
@@ -121,6 +122,8 @@ import com.gargoylesoftware.htmlunit.javascript.host.Location;
 import com.gargoylesoftware.htmlunit.javascript.host.html.DocumentProxy;
 import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLCollection;
 import com.gargoylesoftware.htmlunit.javascript.host.html.HTMLElement;
+import com.gargoylesoftware.js.nashorn.internal.objects.annotations.Browser;
+import com.gargoylesoftware.js.nashorn.internal.objects.annotations.SupportedBrowser;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -349,7 +352,8 @@ public class HtmlUnitDriver implements WebDriver, JavascriptExecutor,
 
     Object rawLanguage = capabilities.getCapability(BROWSER_LANGUAGE_CAPABILITY);
     if (rawLanguage instanceof String) {
-      browserVersionObject.setBrowserLanguage((String) rawLanguage);
+      browserVersionObject = new BrowserVersionBuilder(browserVersionObject)
+          .setBrowserLanguage((String) rawLanguage).build();
     }
 
     return browserVersionObject;
@@ -407,8 +411,10 @@ public class HtmlUnitDriver implements WebDriver, JavascriptExecutor,
     }
     
     exception = null;
+    SupportedBrowser browser = Browser.getCurrent();
     new Thread(() -> {
       try {
+        Browser.setCurrent(browser);
         r.run();
       }
       catch (RuntimeException e) {
@@ -744,8 +750,11 @@ public class HtmlUnitDriver implements WebDriver, JavascriptExecutor,
           break;
 
         case IGNORE:
-      }
-      throw new UnhandledAlertException("Alert found", text);
+          break;
+                   
+        default:
+          throw new UnhandledAlertException("Alert found", text);
+       }
     }
   }
 
